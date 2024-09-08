@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>管理后台 - 五班周刊</title>
+		<link rel="stylesheet" href="css/general.css">
+		<meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<style>
+			.varname{
+				color:red;
+				text-decoration:underline;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="content">
+			<script>
+				var lastres;
+				var view=1;
+				async function runcmd(cmd){
+					console.log(cmd);
+					await fetch("//47.95.172.224:2333",{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({"cmd":cmd})}).then((response)=>{console.log(response);response.json().then((txt)=>{lastres=txt.result;console.log(lastres);})});
+				}
+				function alterUsr(usrname){
+					var column=prompt("请输入要修改的变量（输入 noalter取消）","noalter");
+					if(column=="noalter")return;
+					var val=prompt("请输入目标值","");
+					runcmd("update usrs set `"+column+"`='"+val+"' where `usrname`='"+usrname+"'");
+				}
+				function alterForum(usrname,time){
+					runcmd("delete from forum where `usr`='"+usrname+"' and `time`="+time);
+				}
+				function refresh1(){
+					if(view!=1){
+						document.getElementById("main1").innerHTML="";
+						return;
+					}
+					runcmd("select * from usrs");
+					setTimeout(function(){
+						document.getElementById("main1").innerHTML="<h1>用户</h1><ul>";
+						for(var i=0;i<lastres.length;i++){
+							document.getElementById("main1").innerHTML+=`
+							<li>
+								<b class="varname">usrname:</b>
+								${lastres[i][0]}
+								&emsp;
+								<b class="varname">realname:</b>
+								${lastres[i][1]}
+								&emsp;
+								<b class="varname">pwd:</b>
+								${lastres[i][2]}
+								&emsp;
+								<a href="javascript:alterUsr('${lastres[i][0]}');">编辑</a>
+							</li>
+							`;
+						}
+						document.getElementById("main1").innerHTML+="</ul>";
+					},500);
+				}
+				function refresh2(){
+					if(view!=2){
+						document.getElementById("main2").innerHTML="";
+						return;
+					}
+					runcmd("select * from forum order by time desc");
+					setTimeout(function(){
+						document.getElementById("main2").innerHTML="<h1>论坛</h1><ul>";
+						for(var i=0;i<lastres.length;i++){
+							document.getElementById("main2").innerHTML+=`
+							<li>
+								<b class="varname">usr:</b>
+								${lastres[i][0]}
+								&emsp;
+								<b class="varname">content:</b>
+								${lastres[i][1]}
+								&emsp;
+								<b class="varname">time:</b>
+								${lastres[i][2]}
+								&emsp;
+								<a href="javascript:alterForum('${lastres[i][0]}',${lastres[i][2]});">删除</a>
+							</li>
+							`;
+						}
+						document.getElementById("main2").innerHTML+="</ul>"
+					},500);
+				}
+				function refresh3(){
+					if(view!=3){
+						document.getElementById("main3").innerHTML="";
+						return;
+					}
+					runcmd("select * from report");
+					setTimeout(function(){
+						document.getElementById("main3").innerHTML="<h1>问题反馈</h1><ul>";
+						for(var i=0;i<lastres.length;i++){
+							document.getElementById("main3").innerHTML+=`
+							<li>
+								${lastres[i][0]}
+							</li>
+							`;
+						}
+						document.getElementById("main3").innerHTML+="</ul>"
+					},500);
+				}
+				setInterval(refresh1,2000);
+				setInterval(refresh2,2000);
+				setInterval(refresh3,2000);
+				setInterval(function(){
+					view=parseInt(document.getElementById("mode").value);
+				},500);
+			</script>
+			<p>查看：1 - 用户；2 - 论坛；3 - 问题反馈</p>
+			<input id="mode">
+			<div id="main1">
+			</div>
+			<div id="main2">
+			</div>
+			<div id="main3">
+			</div>
+		</div>
+	</body>
+</html>
